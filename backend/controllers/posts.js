@@ -27,4 +27,3 @@ async function create(req, res) {
     res.status(400).json({ message: 'Failed to creat post' });
   }
 }
-
