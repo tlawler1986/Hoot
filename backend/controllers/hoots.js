@@ -30,7 +30,7 @@ async function create(req, res) {
 
 async function show(req, res) {
   try {
-    const hoot = await Hoot.findById(req.params.hootId).populate("author");
+    const hoot = await Hoot.findById(req.params.hootId).populate("author").populate("comments.author");
     res.json(hoot);
   } catch (err) {
     console.log(err);
