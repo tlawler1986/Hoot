@@ -1,28 +1,20 @@
-const Hoot = require('../models/hoot');
+const Hoot = require("../models/hoot");
 
 module.exports = {
   create,
   show,
   update,
-  deleteComment
+  deleteComment,
 };
 
 async function create(req, res) {
   try {
     req.body.author = req.user._id;
     const hoot = await Hoot.findById(req.params.hootId);
-
-    // Add the comment to the hoot
     hoot.comments.push(req.body);
     await hoot.save();
-
-    // Get the newly created comment
     const newComment = hoot.comments[hoot.comments.length - 1];
-
-    // Populate the author for the entire comments array
     await hoot.populate("comments.author");
-
-    // Respond with the populated comment:
     res.status(201).json(newComment);
   } catch (err) {
     res.status(500).json({ err: err.message });
@@ -31,8 +23,10 @@ async function create(req, res) {
 
 async function show(req, res) {
   try {
-    const hoot = await Hoot.findById(req.params.hootId).populate("comments.author");
-    const comment = hoot.comments.id(req.params.commentId); // correct way to access subdoc
+    const hoot = await Hoot.findById(req.params.hootId).populate(
+      "comments.author"
+    );
+    const comment = hoot.comments.id(req.params.commentId);
 
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
@@ -49,11 +43,9 @@ async function update(req, res) {
     const comment = hoot.comments.id(req.params.commentId);
 
     if (!comment) return res.status(404).json({ message: "Comment not found" });
-
     if (!comment.author.equals(req.user._id)) {
       return res.status(403).send("You're not allowed to update this comment");
     }
-
     comment.text = req.body.text || comment.text;
     await hoot.save();
 
@@ -75,7 +67,7 @@ async function deleteComment(req, res) {
       return res.status(403).send("You're not allowed to delete this comment");
     }
 
-    comment.remove(); // removes from subdocument array
+    comment.remove();
     await hoot.save();
 
     res.json({ message: "Comment deleted" });

@@ -1,44 +1,74 @@
-const User = require('../models/user');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const Hoot = require("../models/hoot");
 
 module.exports = {
-  signUp,
-  logIn,
+  index,
+  create,
+  show,
+  update,
+  deleteHoot,
 };
 
-async function logIn(req, res) {
+async function index(req, res) {
   try {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) throw new Error();
-    const match = await bcrypt.compare(req.body.password, user.password);
-    if (!match) throw new Error();
-    const token = createJWT(user);
-    res.json(token);
+    const hoots = await Hoot.find({});
+    res.json(hoots);
   } catch (err) {
     console.log(err);
-    res.status(400).json({ message: 'Bad Credentials' });
+    res.status(500).json({ message: "Failed to fetch hoots" });
+  }
+}
+async function create(req, res) {
+  try {
+    req.body.author = req.user._id;
+    const hoot = await Hoot.create(req.body);
+    res.json(hoot);
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "Failed to create hoot" });
   }
 }
 
-async function signUp(req, res) {
+async function show(req, res) {
   try {
-    const user = await User.create(req.body);
-    const token = createJWT(user);
-    res.json(token);
+    const hoot = await Hoot.findById(req.params.hootId).populate("author");
+    res.json(hoot);
   } catch (err) {
     console.log(err);
-    res.status(400).json({ message: 'Duplicate Email' });
+    res.status(400).json({ message: "Failed to fetch posts" });
   }
 }
 
-/*--- Helper Functions ---*/
+async function update(req, res) {
+  try {
+    const hoot = await Hoot.findById(req.params.hootId);
+    if (!hoot.author.equals(req.user._id)) {
+      return res.status(403).send("You're not allowed to do that!");
+    }
+    const updatedHoot = await Hoot.findByIdAndUpdate(
+      req.params.hootId,
+      req.body,
+      { new: true }
+    );
 
-function createJWT(user) {
-  return jwt.sign(
-    // data payload
-    { user },
-    process.env.SECRET,
-    { expiresIn: '24h' }
-  );
+    updatedHoot._doc.author = req.user;
+    res.json(updatedHoot);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to update post" });
+  }
+}
+
+async function deleteHoot(req, res) {
+  try {
+    const hoot = await Hoot.findById(req.params.hootId);
+
+    if (!hoot.author.equals(req.user._id)) {
+      return res.status(403).send("You're not allowed to do that!");
+    }
+
+    const deletedHoot = await Hoot.findByIdAndDelete(req.params.hootId);
+    res.json(deletedHoot);
+  } catch (err) {
+    res.status(500).json({ err: err.message });
+  }
 }
