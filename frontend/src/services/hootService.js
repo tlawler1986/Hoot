@@ -11,7 +11,7 @@ export async function create(hootData) {
 }
 
 export async function show(hootId) {
-  return sendRequest(BASE_URL, 'GET', hootId);
+  return sendRequest(`${BASE_URL}/${hootId}`, 'GET');
 }
 
 export async function update(hootId) {

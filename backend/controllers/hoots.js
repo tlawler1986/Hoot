@@ -10,9 +10,7 @@ module.exports = {
 
 async function index(req, res) {
   try {
-    const hoots = await Hoot.find({});
-    // Below would return all hoots for just the logged in user
-    // const hoots = await Hoot.find({author: req.user._id});
+    const hoots = await Hoot.find({}).populate("author");
     res.json(hoots);
   } catch (err) {
     console.log(err);
@@ -23,8 +21,6 @@ async function create(req, res) {
   try {
     req.body.author = req.user._id;
     const hoot = await Hoot.create(req.body);
-    // Below would return all hoots for just the logged in user
-    // const hoots = await Hoot.find({author: req.user._id});
     res.json(hoot);
   } catch (err) {
     console.log(err);
@@ -45,7 +41,6 @@ async function show(req, res) {
 async function update(req, res) {
   try {
     const hoot = await Hoot.findById(req.params.hootId);
-    // Check permissions:
     if (!hoot.author.equals(req.user._id)) {
       return res.status(403).send("You're not allowed to do that!");
     }
@@ -54,7 +49,7 @@ async function update(req, res) {
       req.body,
       { new: true }
     );
-    // Append req.user to the author property:
+
     updatedHoot._doc.author = req.user;
     res.json(updatedHoot);
   } catch (err) {
